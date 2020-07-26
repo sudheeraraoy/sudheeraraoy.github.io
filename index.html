@@ -1,37 +1,32 @@
-<!DOCTYPE html>
-	<html ng-app='ShoppingListCheckOff'>
-		<head>
-			<meta charset="utf-8">
-			<script src="angular.min.js"></script>
-			<script src="app.js"></script>
-			<style>body{font-size:1.2em;}</style>
-			<title>Filters</title>
-		</head>
-		<body>
-			<h1>Shopping List</h1><br>
-			
-			
-			<div ng-controller='ToBuyShoppingController as toBuyList'>
-				<div ng-if="toBuyList.toBuyItemList.length === 0" class="error">Everything is bought!</div>
-				<ol>
-					<li ng-repeat="item in toBuyList.toBuyItemList">
-					 Buy {{item.quantity}} {{item.name}}
-					<button ng-click="toBuyList.addToBoughtList($index,item.quantity,item.name)">Bought</button><br>
-					</li>
-				</ol><br><br>
-				
-						</div>
-						
-			<div ng-controller='AlreadyBoughtShoppingController as BoughtList' >
-				<h1>Bought Items</h1><br>
-				<div ng-if="BoughtList.boughtlist.length === 0" class="error">Nothing is bought!</div>
-				<ol>
-					<li ng-repeat="ite in BoughtList.boughtlist">
-						 {{ite.quantity}} {{ite.name}}
-					</li>
+<!doctype html>
+<html ng-app='NarrowItDownApp' lang="en">
+  <head>
+    <title>Narrow Down Your Menu Choice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="angular.min.js"></script>
+    <script src="app.js"></script>
+    <link rel="stylesheet" href="styles/bootstrap.min.css">
+    <link rel="stylesheet" href="styles/styles.css">
+  </head>
+<body>
+   <div ng-controller="NarrowItDownController as narrowCtrl" class="container">
+    <h1>Narrow Down Your Chinese Menu Choice</h1>
 
-				</ol>
-			</div>
-		</body>
+    <div class="form-group">
+      <input ng-model="narrowCtrl.searchTerm" type="text" placeholder="search term" class="form-control">
+    </div>
+    <div class="form-group narrow-button">
+      <button ng-click="narrowCtrl.searchMenuItems()" class="btn btn-primary">Narrow It Down For Me!</button>
+    </div>
 
-	</html>
+    <p><br/><hr/></p>
+
+    <found-items
+      items="narrowCtrl.found"
+      on-remove="narrowCtrl.removeItem(index)">
+    </found-items>
+
+  </div>
+
+</body>
+</html>

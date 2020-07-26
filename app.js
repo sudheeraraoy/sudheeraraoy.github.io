@@ -1,92 +1,95 @@
-'use strict';
+(function () {
+  'use strict'
+
+angular.module('NarrowItDownApp', [])
+.controller('NarrowItDownController', NarrowItDownController)
+.service('MenuSearchService', MenuSearchService)
+.directive('foundItems', FoundItemsDirective)
+.constant('ApiBasePath', "http://davids-restaurant.herokuapp.com");
 
 
-	angular.module('ShoppingListCheckOff',[])
-	
-	.controller('ToBuyShoppingController',ToBuyShoppingController)
-	.controller('AlreadyBoughtShoppingController',AlreadyBoughtShoppingController)
-	.service('ShoppingListCheckOffService',ShoppingListCheckOffService);
-	
-	
-	
-	ToBuyShoppingController.$inject=['ShoppingListCheckOffService'];
+NarrowItDownController.$inject = ['MenuSearchService'];
+function NarrowItDownController(MenuSearchService) {
+  var narrowCtrl = this;
+  narrowCtrl.found = MenuSearchService.getItems();
+  narrowCtrl.searchMenuItems = function () {
+    if (narrowCtrl.searchTerm === "") {
+      MenuSearchService.clear();
+    } else {
+      MenuSearchService.getMatchedMenuItems(narrowCtrl.searchTerm)
+      .then(function(result) {
+        narrowCtrl.found = result;
+      });
+    }
+  }
 
-	function ToBuyShoppingController(ShoppingListCheckOffService)
-	{
-		var toBuyList=this;
-		
-		toBuyList.toBuyItemList=ShoppingListCheckOffService.getItems();
-		
-		
-		
-		toBuyList.addToBoughtList=function(itemIndex,itemcount,itemname)
-		{
-			
+  narrowCtrl.removeItem = function(itemIndex) {
+    MenuSearchService.removeItem(itemIndex);
+  };
+}
 
-			ShoppingListCheckOffService.addToBoughtList(itemIndex,itemcount,itemname);
-		};
-		
-	}
+function FoundItemsDirective() {
+  var ddo = {
+    templateUrl: 'foundItems.html',
+    scope: {
+      items: '<',
+      onRemove: '&'
+    },
+    controller: FoundItemsDirectiveController,
+    controllerAs: 'foundCtrl',
+    bindToController: true
+  };
 
-	AlreadyBoughtShoppingController.$inject=['ShoppingListCheckOffService'];
+  return ddo;
+}
 
-	function AlreadyBoughtShoppingController(ShoppingListCheckOffService)
-	{
-		var boughtlist=this;
-		
-		
-		boughtlist.boughtlist=ShoppingListCheckOffService.buylist();
-		
-		
-		boughtlist.AddItem=function(itemIndex)
-		{
-			
-			ShoppingListCheckOffService.AddItem(itemIndex);
-		};
-		
-	}
+function FoundItemsDirectiveController() {
+  var foundCtrl = this;
 
+  foundCtrl.isNothingFound = function() {
+    if (foundCtrl.items.length === 0) {
+      return true;
+    }
+    return false;
+  };
+}
 
+MenuSearchService.$inject = ['$http', 'ApiBasePath'];
+function MenuSearchService($http, ApiBasePath) {
+  var service = this;
+  var foundItems = [];
 
-	function ShoppingListCheckOffService()
-	{
-		var service=this;
-		var toBuyItemList=[{name:"Milk",quantity:"200"},{name:"Biscuits",quantity:"5"},{name:"Apple",quantity:"12"},{name:"Soap",quantity:"5"},{name:"NoteBook",quantity:"15"}];
-		
-		var boughtlist=[];		
-		service.getItems=function()
-				 {   
-				    return toBuyItemList;
-				 };
-		service.buylist=function()
-				 {   
-					return boughtlist;
-				 };
-		service.addToBoughtList=function(itemIndex,itemcount,itemname)
-				 { 
-					
-					console.log("itemname value:",itemIndex);
-					console.log("itemname value:",itemcount);
-					console.log("itemname value:",itemname);
-					 
-					
-					
-					toBuyItemList.splice(itemIndex,1);
-					boughtlist.push({name:itemname,quantity:itemcount});
-					
-					
-				 };		
-				 service.AddItem=function(itemIndex)
-				 { 
-					boughtlist.push({name:"a",quantity:"10"}); 
-					
-					 boughtlist.push(itemIndex);
-					
-					
-					
-				 };				 
-				 
+  service.getMatchedMenuItems = function(searchTerm) {
+    foundItems.splice(0, foundItems.length);
+    if (searchTerm === "") {
+      return foundItems;
+    }
+    return $http({
+      method: "GET",
+      url: (ApiBasePath + "/menu_items.json")
+    }).then(function(result) {
+      var allItems = result.data.menu_items;
+      foundItems.splice(0, foundItems.length);
+      for (var index = 0; index < allItems.length; ++index) {
+        if (allItems[index].description.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1) {
+          foundItems.push(allItems[index]);
+        }
+      }
+      return foundItems;
+    });
+  };
 
-	}
+  service.clear = function() {
+    foundItems.splice(0, foundItems.length);
+  }
 
-	
+  service.removeItem = function(itemIndex) {
+    foundItems.splice(itemIndex, 1);
+  };
+
+  service.getItems = function() {
+    return foundItems;
+  };
+}
+
+})();
